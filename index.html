@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UTG Opportunity Board</title>
+  <meta name="description"
+    content="The official opportunity board for University of The Gambia students — internships, scholarships, competitions, workshops, grants and volunteer roles in one place." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap"
+    rel="stylesheet" />
+  <!-- All visual styling lives in styles.css, kept separate from markup and behavior -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <!-- ══════════════════════════════════════════════════
+     AUTH GATE — UTG students only
+     Visible by default; script.js hides it and reveals
+     #appRoot once a valid @utg.edu.gm session exists.
+══════════════════════════════════════════════════ -->
+  <div id="authGate">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <span class="nav__badge">UTG</span>
+        <span class="bn">Opportunity Board</span>
+      </div>
+      <h1 class="auth-h1">Welcome, <em>Bantaba</em></h1>
+      <p class="auth-sub">Sign in with your University of The Gambia student email to browse, bookmark, and apply for
+        opportunities.</p>
+
+      <div class="auth-domain-badge">🔒 Access limited to @utg.edu.gm student emails</div>
+
+      <div class="auth-tabs">
+        <div class="auth-tab on" id="tabLogin" onclick="setAuthTab('login')">Sign in</div>
+        <div class="auth-tab" id="tabSignup" onclick="setAuthTab('signup')">Create account</div>
+      </div>
+
+      <!-- SIGN IN -->
+      <div id="formLogin">
+        <div class="auth-field">
+          <label for="li-email">UTG email</label>
+          <input id="li-email" type="email" placeholder="yourname@utg.edu.gm" autocomplete="username" />
+        </div>
+        <div class="auth-field">
+          <label for="li-pass">Password</label>
+          <input id="li-pass" type="password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <p class="auth-err" id="li-err"></p>
+        <button class="btn btn-primary auth-submit" onclick="doLogin()">Sign in</button>
+      </div>
+
+      <!-- CREATE ACCOUNT -->
+      <div id="formSignup" style="display:none">
+        <div class="auth-field">
+          <label for="su-name">Full name</label>
+          <input id="su-name" type="text" placeholder="Fatou Jallow" autocomplete="name" />
+        </div>
+        <div class="auth-field">
+          <label for="su-email">UTG email</label>
+          <input id="su-email" type="email" placeholder="yourname@utg.edu.gm" autocomplete="username" />
+          <p class="auth-hint">Must end in @utg.edu.gm — this is how we confirm you're a UTG student.</p>
+        </div>
+        <div class="auth-field">
+          <label for="su-id">Student ID (optional)</label>
+          <input id="su-id" type="text" placeholder="UTG/2022/CS/045" />
+        </div>
+        <div class="auth-field">
+          <label for="su-pass">Password</label>
+          <input id="su-pass" type="password" placeholder="At least 4 characters" autocomplete="new-password" />
+        </div>
+        <p class="auth-err" id="su-err"></p>
+        <button class="btn btn-primary auth-submit" onclick="doSignup()">Create account</button>
+      </div>
+
+      <p class="auth-foot">University of The Gambia · Faculty &amp; student data stays on this device.</p>
+    </div>
+  </div>
+
+  <!-- ─── NAV ─────────────────────────────────────────── -->
+  <header>
+    <nav class="nav" id="nav" role="navigation" aria-label="Main navigation">
+      <div class="nav__inner">
+        <div class="nav__logo" onclick="goto('home')" role="button" tabindex="0"
+          aria-label="UTG Opportunity Board Home">
+          <span class="nav__badge">UTG</span>
+          <span class="nav__name">Opportunity <em>Board</em></span>
+        </div>
+        <div class="nav__links" role="menubar">
+          <button class="nav__link on" data-page="home" role="menuitem">Home</button>
+          <button class="nav__link" data-page="opps" role="menuitem">Opportunities</button>
+          <button class="nav__link" data-page="post" role="menuitem">Post Opportunity</button>
+          <button class="nav__link" data-page="about" role="menuitem">About</button>
+          <button class="nav__link" data-page="bookmarks" role="menuitem">
+            Bookmarks<span class="nav__bm-count" id="bmCount" style="display:none">0</span>
+          </button>
+          <button class="nav__link" data-page="contact" role="menuitem">Contact</button>
+          <div class="nav__user" id="navUserPill" aria-label="Signed-in student"></div>
+        </div>
+        <button class="nav__burger" id="burger" aria-label="Toggle menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <div class="nav__mobile" id="mobileMenu" role="menu">
+        <button class="nav__link" data-page="home" role="menuitem">Home</button>
+        <button class="nav__link" data-page="opps" role="menuitem">Opportunities</button>
+        <button class="nav__link" data-page="post" role="menuitem">Post Opportunity</button>
+        <button class="nav__link" data-page="about" role="menuitem">About</button>
+        <button class="nav__link" data-page="bookmarks" role="menuitem">Bookmarks</button>
+        <button class="nav__link" data-page="contact" role="menuitem">Contact</button>
+      </div>
+    </nav>
+  </header>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Everything below is the actual app. It stays hidden (display:none)
+     until checkAuthOnLoad() in script.js confirms a logged-in UTG student. -->
+  <div id="appRoot" style="display:none">
+
+    <!-- ══════════════════════════════════════════════════
+     PAGE: HOME
+══════════════════════════════════════════════════ -->
+    <main class="page active" id="pg-home" aria-label="Home">
+
+      <section class="hero" aria-labelledby="hero-h1">
+        <div class="hero__content">
+          <div class="hero__eyebrow">University of The Gambia</div>
+          <h1 class="hero__h1" id="hero-h1">
+            Your next big<br />opportunity<br /><em>starts here.</em>
+          </h1>
+          <p class="hero__sub">One place for all internships, scholarships, competitions, and workshops for UTG
+            students. Never miss a deadline again.</p>
+          <div class="hero__btns">
+            <button class="btn btn-primary" onclick="goto('opps')">Browse Opportunities</button>
+            <button class="btn btn-outline" onclick="goto('about')">How it works</button>
+          </div>
+          <div class="hero__stats" aria-label="Site statistics">
+            <div><span class="hstat__n" data-count="48">48</span><span class="hstat__l">Active listings</span></div>
+            <div style="width:1px;background:var(--line)"></div>
+            <div><span class="hstat__n" data-count="12">12</span><span class="hstat__l">Added this week</span></div>
+            <div style="width:1px;background:var(--line)"></div>
+            <div><span class="hstat__n" data-count="6">6</span><span class="hstat__l">Categories</span></div>
+          </div>
+        </div>
+        <div class="hero__visual" aria-hidden="true">
+          <div class="fc">
+            <span class="tag tag-internship fc__tag">Internship</span>
+            <div class="fc__title">Software Dev Intern</div>
+            <div class="fc__org">Gamtel · Banjul</div>
+            <div class="fc__dl">⏰ 4 days left</div>
+          </div>
+          <div class="fc">
+            <span class="tag tag-scholarship fc__tag">Scholarship</span>
+            <div class="fc__title">Commonwealth Masters</div>
+            <div class="fc__org">UK · Fully Funded</div>
+            <div class="fc__dl">⏰ 18 days left</div>
+          </div>
+          <div class="fc">
+            <span class="tag tag-workshop fc__tag">Workshop</span>
+            <div class="fc__title">Data Science Bootcamp</div>
+            <div class="fc__org">Remote · Free</div>
+            <div class="fc__dl">⏰ 7 days left</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cats" aria-labelledby="cats-h2">
+        <div class="wrap">
+          <div class="sec__hd">
+            <div>
+              <h2 id="cats-h2"
+                style="font-family:var(--font-display);font-size:clamp(1.6rem,3vw,2.1rem);font-weight:400;color:var(--ink)">
+                Browse by <em style="color:var(--forest-l);font-style:italic">category</em></h2>
+              <p style="color:var(--ink-3);margin-top:4px;font-size:.9rem">Filter opportunities by what you need most
+              </p>
+            </div>
+            <button class="see-all" onclick="goto('opps')">View all →</button>
+          </div>
+          <div class="cats__grid">
+            <div class="cat" onclick="gotoFilter('internship')" role="button" tabindex="0"
+              aria-label="Browse internships">
+              <div class="cat__ico">💼</div>
+              <div class="cat__name">Internships</div>
+              <div class="cat__n">14 open</div>
+            </div>
+            <div class="cat" onclick="gotoFilter('scholarship')" role="button" tabindex="0"
+              aria-label="Browse scholarships">
+              <div class="cat__ico">🎓</div>
+              <div class="cat__name">Scholarships</div>
+              <div class="cat__n">9 open</div>
+            </div>
+            <div class="cat" onclick="gotoFilter('competition')" role="button" tabindex="0"
+              aria-label="Browse competitions">
+              <div class="cat__ico">🏆</div>
+              <div class="cat__name">Competitions</div>
+              <div class="cat__n">7 open</div>
+            </div>
+            <div class="cat" onclick="gotoFilter('workshop')" role="button" tabindex="0" aria-label="Browse workshops">
+              <div class="cat__ico">🛠️</div>
+              <div class="cat__name">Workshops</div>
+              <div class="cat__n">11 open</div>
+            </div>
+            <div class="cat" onclick="gotoFilter('grant')" role="button" tabindex="0" aria-label="Browse grants">
+              <div class="cat__ico">💰</div>
+              <div class="cat__name">Grants</div>
+              <div class="cat__n">4 open</div>
+            </div>
+            <div class="cat" onclick="gotoFilter('volunteer')" role="button" tabindex="0"
+              aria-label="Browse volunteer opportunities">
+              <div class="cat__ico">🤝</div>
+              <div class="cat__name">Volunteer</div>
+              <div class="cat__n">3 open</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="featured wrap" aria-labelledby="feat-h2">
+        <div class="sec__hd">
+          <div>
+            <h2 id="feat-h2"
+              style="font-family:var(--font-display);font-size:clamp(1.6rem,3vw,2.1rem);font-weight:400;color:var(--ink)">
+              <em style="color:var(--forest-l);font-style:italic">Featured</em> opportunities</h2>
+            <p style="color:var(--ink-3);margin-top:4px;font-size:.9rem">Closing soonest — don't wait</p>
+          </div>
+          <button class="see-all" onclick="goto('opps')">See all →</button>
+        </div>
+        <div class="opp-grid" id="homeGrid" aria-label="Featured opportunity listings"></div>
+      </section>
+
+      <section class="how" aria-labelledby="how-h2">
+        <div class="wrap">
+          <div class="sec__hd">
+            <h2 id="how-h2" style="font-family:var(--font-display);font-size:clamp(1.6rem,3vw,2.1rem);font-weight:400">
+              How it <em style="font-style:italic;color:var(--gold-l)">works</em></h2>
+            <p style="color:rgba(255,255,255,.55);font-size:.9rem">Three steps to your next opportunity</p>
+          </div>
+          <div class="how__steps">
+            <div class="how__step">
+              <div class="how__num">1</div>
+              <h3>Browse & Search</h3>
+              <p>Explore curated opportunities filtered by type, deadline, field, and location.</p>
+            </div>
+            <div class="how__arrow" aria-hidden="true">→</div>
+            <div class="how__step">
+              <div class="how__num">2</div>
+              <h3>Bookmark Favorites</h3>
+              <p>Save the ones that interest you and come back to them anytime.</p>
+            </div>
+            <div class="how__arrow" aria-hidden="true">→</div>
+            <div class="how__step">
+              <div class="how__num">3</div>
+              <h3>Apply on Time</h3>
+              <p>Get direct links and deadlines so you never submit late again.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="ctaband" role="complementary">
+        <h2>Have an opportunity to share?</h2>
+        <p>Help your fellow UTG students by submitting internships, scholarships, or workshops.</p>
+        <button class="btn btn-primary" onclick="goto('contact')">Submit an Opportunity</button>
+      </div>
+
+    </main>
+
+    <!-- ══════════════════════════════════════════════════
+     PAGE: OPPORTUNITIES
+══════════════════════════════════════════════════ -->
+    <main class="page" id="pg-opps" aria-label="Opportunities">
+
+      <div class="pg-hero">
+        <h1>Find Your Opportunity</h1>
+        <p>Search internships, scholarships, competitions, workshops and more — all in one place.</p>
+        <div class="searchbar" role="search">
+          <label for="searchInput" class="sr-only">Search opportunities</label>
+          <input id="searchInput" type="text" placeholder="Search by title, organization, or keyword…"
+            autocomplete="off" />
+          <button onclick="doSearch()" aria-label="Search">Search</button>
+        </div>
+        <div class="chips" role="group" aria-label="Filter by category">
+          <button class="chip on" data-type="all">All</button>
+          <button class="chip" data-type="internship">Internships</button>
+          <button class="chip" data-type="scholarship">Scholarships</button>
+          <button class="chip" data-type="competition">Competitions</button>
+          <button class="chip" data-type="workshop">Workshops</button>
+          <button class="chip" data-type="grant">Grants</button>
+          <button class="chip" data-type="volunteer">Volunteer</button>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <div class="opps-wrap">
+          <!-- sidebar filters -->
+          <aside class="sidebar" aria-label="Refine filters">
+            <div class="sb-sec">
+              <div class="sb-title">Location</div>
+              <div class="filter-group" role="group" aria-label="Location filter">
+                <label class="cb-label"><input type="checkbox" value="remote" name="loc" onchange="applyFilters()" />
+                  Remote</label>
+                <label class="cb-label"><input type="checkbox" value="banjul" name="loc" onchange="applyFilters()" />
+                  Banjul</label>
+                <label class="cb-label"><input type="checkbox" value="international" name="loc"
+                    onchange="applyFilters()" /> International</label>
+              </div>
+            </div>
+            <div class="sb-div"></div>
+            <div class="sb-sec">
+              <div class="sb-title">Compensation</div>
+              <div class="filter-group" role="group" aria-label="Compensation filter">
+                <label class="cb-label"><input type="checkbox" value="paid" name="pay" onchange="applyFilters()" />
+                  Paid</label>
+                <label class="cb-label"><input type="checkbox" value="free" name="pay" onchange="applyFilters()" /> Free
+                  / Unpaid</label>
+              </div>
+            </div>
+            <div class="sb-div"></div>
+            <div class="sb-sec">
+              <div class="sb-title">Deadline</div>
+              <div class="filter-group" role="group" aria-label="Deadline filter">
+                <label class="cb-label"><input type="radio" name="dl" value="all" onchange="applyFilters()" checked />
+                  Any time</label>
+                <label class="cb-label"><input type="radio" name="dl" value="7" onchange="applyFilters()" /> Within 7
+                  days</label>
+                <label class="cb-label"><input type="radio" name="dl" value="14" onchange="applyFilters()" /> Within 14
+                  days</label>
+                <label class="cb-label"><input type="radio" name="dl" value="30" onchange="applyFilters()" /> Within 30
+                  days</label>
+              </div>
+            </div>
+            <div class="sb-div"></div>
+            <button class="clear-btn" onclick="clearAllFilters()">Clear all filters</button>
+          </aside>
+
+          <!-- main results -->
+          <div class="main-col">
+            <div class="res-hd">
+              <span class="res-count" id="resCount" aria-live="polite"></span>
+              <label for="sortSel" class="sr-only">Sort results</label>
+              <select class="sort-sel" id="sortSel" onchange="applyFilters()" aria-label="Sort opportunities">
+                <option value="deadline">Closing soonest</option>
+                <option value="newest">Newest first</option>
+                <option value="az">A–Z</option>
+              </select>
+            </div>
+            <div class="opp-grid" id="oppGrid" aria-label="Opportunity listings"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ══════════════════════════════════════════════════
+     PAGE: ABOUT
+══════════════════════════════════════════════════ -->
+    <main class="page" id="pg-about" aria-label="About">
+
+      <div class="pg-hero">
+        <h1>About the Board</h1>
+        <p>Built by UTG students, for UTG students — because missing an opportunity shouldn't be down to not knowing it
+          existed.</p>
+      </div>
+
+      <div class="about-body">
+        <div class="wrap">
+          <div class="about-grid">
+            <div class="about-txt">
+              <h2>About the <em>University</em></h2>
+              <p>The University of The Gambia (UTG) is the country's first and largest public university, established in
+                1999. Its motto, <em>"Knowledge for Service,"</em> guides its mission to provide accessible,
+                high-quality higher education to Gambians and the wider West African region.</p>
+              <p>UTG operates across several campuses — including Faraba Banta, Brikama, and Kanifing — and is organized
+                into faculties such as Humanities & Social Sciences, Science & Agriculture, Law, Business & Management
+                Sciences, Education, and Medicine & Allied Health Sciences.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="wrap">
+          <div class="about-grid">
+            <div class="about-txt">
+              <h2>Why we <em>built</em> this</h2>
+              <p>Every semester, UTG students miss out on life-changing internships, scholarships, and competitions
+                simply because there was no single place to find them. Opportunities were buried in WhatsApp groups,
+                notice boards, or word of mouth.</p>
+              <p>The UTG Opportunity Board is a centralized hub designed with HCI principles at its core — making
+                discovery fast, filtering intuitive, and deadlines impossible to ignore.</p>
+              <p>This project was developed as part of the HCI coursework at the University of The Gambia, applying
+                usability, accessibility, and user-centered design principles throughout.</p>
+            </div>
+            <div class="about-visual" aria-label="Statistics">
+              <div class="av-stat">
+                <div class="av-n">48</div>
+                <div class="av-l">Active opportunities</div>
+              </div>
+              <div class="av-stat">
+                <div class="av-n">6</div>
+                <div class="av-l">Categories covered</div>
+              </div>
+              <div class="av-stat">
+                <div class="av-n">100%</div>
+                <div class="av-l">Free to use</div>
+              </div>
+              <div class="av-stat">
+                <div class="av-n">UTG</div>
+                <div class="av-l">Student-built</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="principles">
+          <div class="wrap">
+            <div class="sec__hd">
+              <h2
+                style="font-family:var(--font-display);font-size:clamp(1.6rem,3vw,2.1rem);font-weight:400;color:var(--ink)">
+                HCI principles <em style="color:var(--forest-l);font-style:italic">applied</em></h2>
+              <p style="color:var(--ink-3);font-size:.9rem;margin-top:4px">How we put users at the center of every
+                decision</p>
+            </div>
+            <div class="p-grid">
+              <div class="p-card">
+                <div class="p-ico">🎯</div>
+                <h3>Usability</h3>
+                <p>Clean navigation, consistent layouts, and instant feedback on every action. Users always know where
+                  they are and what just happened.</p>
+              </div>
+              <div class="p-card">
+                <div class="p-ico">♿</div>
+                <h3>Accessibility</h3>
+                <p>ARIA labels, keyboard navigation, sufficient color contrast, and responsive design ensure the site
+                  works for everyone.</p>
+              </div>
+              <div class="p-card">
+                <div class="p-ico">🎨</div>
+                <h3>Visual Hierarchy</h3>
+                <p>Intentional use of typography scale, whitespace, and color guides the eye to deadlines, actions, and
+                  key information.</p>
+              </div>
+              <div class="p-card">
+                <div class="p-ico">🔄</div>
+                <h3>Consistency</h3>
+                <p>Uniform design tokens — colors, border radii, spacing — applied across every page so users build
+                  familiarity instantly.</p>
+              </div>
+              <div class="p-card">
+                <div class="p-ico">🛡️</div>
+                <h3>Error Prevention</h3>
+                <p>Real-time form validation with specific, actionable error messages. Inputs guide users before they
+                  can submit incorrectly.</p>
+              </div>
+              <div class="p-card">
+                <div class="p-ico">📱</div>
+                <h3>Responsiveness</h3>
+                <p>Fully responsive layouts from 320px mobile widths to large desktops, tested at every breakpoint.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="team wrap">
+          <div class="sec__hd">
+            <h2
+              style="font-family:var(--font-display);font-size:clamp(1.6rem,3vw,2.1rem);font-weight:400;color:var(--ink)">
+              Meet the <em style="color:var(--forest-l);font-style:italic">team</em></h2>
+            <p style="color:var(--ink-3);font-size:.9rem;margin-top:4px">Group members — HCI Project 2025</p>
+          </div>
+          <div class="team-grid">
+            <div class="tcard">
+              <div class="tcard__avatar">👨‍💻</div>
+              <div class="tcard__name">Member One</div>
+              <div class="tcard__role">UI Design & Frontend</div>
+              <div class="tcard__id">UTG/2021/CS/001</div>
+            </div>
+            <div class="tcard">
+              <div class="tcard__avatar">👩‍💻</div>
+              <div class="tcard__name">Member Two</div>
+              <div class="tcard__role">UX Research & Content</div>
+              <div class="tcard__id">UTG/2021/CS/002</div>
+            </div>
+            <div class="tcard">
+              <div class="tcard__avatar">🧑‍💻</div>
+              <div class="tcard__name">Member Three</div>
+              <div class="tcard__role">Development & Testing</div>
+              <div class="tcard__id">UTG/2021/CS/003</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ══════════════════════════════════════════════════
+     PAGE: BOOKMARKS
+══════════════════════════════════════════════════ -->
+    <main class="page" id="pg-bookmarks" aria-label="Saved bookmarks">
+
+      <div class="pg-hero">
+        <h1>Your Bookmarks</h1>
+        <p>Opportunities you've saved for later — review them and apply before deadlines pass.</p>
+      </div>
+
+      <div class="bm-page wrap">
+        <div class="bm-hd">
+          <h2 id="bmTitle">Saved opportunities</h2>
+          <button class="btn btn-outline btn-sm" onclick="clearAllBookmarks()" id="clearBmBtn"
+            style="display:none">Clear all</button>
+        </div>
+        <div id="bmGrid" class="opp-grid" aria-label="Bookmarked opportunities" aria-live="polite"></div>
+      </div>
+
+    </main>
+
+    <!-- ══════════════════════════════════════════════════
+     PAGE: POST AN OPPORTUNITY
+     Logged-in students can add a listing here. Submissions are
+     saved with addOpportunity() into localStorage and merged
+     back into every list via getAllOpps() in script.js.
+══════════════════════════════════════════════════ -->
+    <main class="page" id="pg-post" aria-label="Post an opportunity">
+
+      <div class="pg-hero">
+        <h1>Post an Opportunity</h1>
+        <p>Found an internship, scholarship, or workshop? Add it to the board so other UTG students can find it.</p>
+      </div>
+
+      <div class="wrap post-wrap">
+        <div class="post-card" role="form" aria-label="Post opportunity form">
+          <h3>New listing</h3>
+          <p class="ps">Saved instantly to this device and shown across Home, Opportunities, and Bookmarks.</p>
+
+          <div class="frow">
+            <div class="fg">
+              <label for="np-title">Opportunity title *</label>
+              <input id="np-title" type="text" placeholder="e.g. Frontend Developer Intern" />
+              <span class="ferr" id="err-np-title">Please enter a title.</span>
+            </div>
+            <div class="fg">
+              <label for="np-org">Organization *</label>
+              <input id="np-org" type="text" placeholder="e.g. NAWEC" />
+              <span class="ferr" id="err-np-org">Please enter the organization.</span>
+            </div>
+          </div>
+
+          <div class="frow">
+            <div class="fg">
+              <label for="np-type">Type *</label>
+              <select id="np-type">
+                <option value="">Select type…</option>
+                <option value="internship">Internship</option>
+                <option value="scholarship">Scholarship</option>
+                <option value="competition">Competition</option>
+                <option value="workshop">Workshop</option>
+                <option value="grant">Grant</option>
+                <option value="volunteer">Volunteer</option>
+              </select>
+              <span class="ferr" id="err-np-type">Please select a type.</span>
+            </div>
+            <div class="fg">
+              <label for="np-field">Field *</label>
+              <input id="np-field" type="text" placeholder="e.g. Technology" />
+              <span class="ferr" id="err-np-field">Please enter a field.</span>
+            </div>
+          </div>
+
+          <div class="frow">
+            <div class="fg">
+              <label for="np-loc">Location *</label>
+              <input id="np-loc" type="text" placeholder="e.g. Banjul, Remote, UK…" />
+              <span class="ferr" id="err-np-loc">Please enter a location.</span>
+            </div>
+            <div class="fg">
+              <label for="np-dl">Application deadline *</label>
+              <input id="np-dl" type="date" />
+              <span class="ferr" id="err-np-dl">Please select a deadline date.</span>
+            </div>
+          </div>
+
+          <div class="fg">
+            <label for="np-desc">Description *</label>
+            <textarea id="np-desc" placeholder="Requirements, benefits, how to apply…"></textarea>
+            <span class="ferr" id="err-np-desc">Please add a description (min 20 characters).</span>
+          </div>
+
+          <div class="fg">
+            <label for="np-link">External link (optional)</label>
+            <input id="np-link" type="url" placeholder="https://…" />
+          </div>
+
+          <div class="toggle-row fg">
+            <label><input type="checkbox" id="np-remote" /> Remote</label>
+            <label><input type="checkbox" id="np-paid" /> Paid</label>
+          </div>
+
+          <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="submitNewOpp()">Post
+            Opportunity</button>
+        </div>
+
+        <div class="my-opps-strip">
+          <h4>Opportunities you've posted</h4>
+          <div id="myOppsList"></div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ══════════════════════════════════════════════════
+     PAGE: CONTACT
+══════════════════════════════════════════════════ -->
+    <main class="page" id="pg-contact" aria-label="Contact">
+
+      <div class="pg-hero">
+        <h1>Get in Touch</h1>
+        <p>Submit a new opportunity, report an issue, or just say hello.</p>
+      </div>
+
+      <div class="contact-body">
+        <div class="wrap">
+          <div class="contact-grid">
+            <div class="contact-info">
+              <h2>Submit an <em>opportunity</em></h2>
+              <p>Know of an internship, scholarship, or competition that UTG students should know about? Fill in the
+                form and we'll review and list it within 48 hours.</p>
+              <div class="ci-items">
+                <div class="ci-item">
+                  <div class="ci-ico" aria-hidden="true">📍</div>
+                  <div class="ci-text">
+                    <label>Location</label>
+                    <span>University of The Gambia, Kanifing</span>
+                  </div>
+                </div>
+                <div class="ci-item">
+                  <div class="ci-ico" aria-hidden="true">✉️</div>
+                  <div class="ci-text">
+                    <label>Email</label>
+                    <span>opportunities@utg.edu.gm</span>
+                  </div>
+                </div>
+                <div class="ci-item">
+                  <div class="ci-ico" aria-hidden="true">⏱️</div>
+                  <div class="ci-text">
+                    <label>Response time</label>
+                    <span>Within 48 hours</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cform" role="form" aria-label="Submit opportunity form">
+              <h3>Submit an Opportunity</h3>
+              <div class="frow">
+                <div class="fg">
+                  <label for="f-name">Your name *</label>
+                  <input id="f-name" type="text" placeholder="Fatou Jallow" autocomplete="name" />
+                  <span class="ferr" id="err-name">Please enter your name.</span>
+                </div>
+                <div class="fg">
+                  <label for="f-email">Email address *</label>
+                  <input id="f-email" type="email" placeholder="you@utg.edu.gm" autocomplete="email" />
+                  <span class="ferr" id="err-email">Enter a valid email address.</span>
+                </div>
+              </div>
+              <div class="fg">
+                <label for="f-opp">Opportunity title *</label>
+                <input id="f-opp" type="text" placeholder="e.g. Software Engineering Intern at NAWEC" />
+                <span class="ferr" id="err-opp">Please enter the opportunity title.</span>
+              </div>
+              <div class="frow">
+                <div class="fg">
+                  <label for="f-type">Type *</label>
+                  <select id="f-type">
+                    <option value="">Select type…</option>
+                    <option value="internship">Internship</option>
+                    <option value="scholarship">Scholarship</option>
+                    <option value="competition">Competition</option>
+                    <option value="workshop">Workshop</option>
+                    <option value="grant">Grant</option>
+                    <option value="volunteer">Volunteer</option>
+                  </select>
+                  <span class="ferr" id="err-type">Please select a type.</span>
+                </div>
+                <div class="fg">
+                  <label for="f-dl">Application deadline *</label>
+                  <input id="f-dl" type="date" />
+                  <span class="ferr" id="err-dl">Please select a deadline date.</span>
+                </div>
+              </div>
+              <div class="fg">
+                <label for="f-desc">Description *</label>
+                <textarea id="f-desc"
+                  placeholder="Describe the opportunity — requirements, benefits, how to apply…"></textarea>
+                <span class="ferr" id="err-desc">Please add a description (min 20 characters).</span>
+              </div>
+              <div class="fg">
+                <label for="f-link">Application link</label>
+                <input id="f-link" type="url" placeholder="https://…" autocomplete="url" />
+                <span class="ferr" id="err-link">Enter a valid URL starting with https://</span>
+              </div>
+              <button class="btn btn-primary" style="width:100%;margin-top:6px" onclick="submitForm()">Submit
+                Opportunity</button>
+              <div class="fsuccess" id="formSuccess" role="alert">
+                ✅ Thank you! Your submission has been received. We'll review it and publish it within 48 hours.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ─── FOOTER ────────────────────────────────────────── -->
+    <!-- ─── DETAILS MODAL ─────────────────────────────────── -->
+    <div class="modal-overlay" id="detailsModal" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
+      <div class="modal-box">
+        <div class="modal-hd">
+          <h3 id="detailsTitle">Opportunity</h3>
+          <button class="modal-close" onclick="closeModal('detailsModal')" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body" id="detailsBody"></div>
+        <button class="btn btn-primary" id="detailsApplyBtn" style="width:100%;margin-top:6px">Apply Now</button>
+      </div>
+    </div>
+
+    <!-- ─── APPLY MODAL ───────────────────────────────────── -->
+    <div class="modal-overlay" id="applyModal" role="dialog" aria-modal="true" aria-labelledby="applyTitle">
+      <div class="modal-box">
+        <div class="modal-hd">
+          <div>
+            <h3 id="applyTitle">Apply</h3>
+            <p id="applySub" style="color:var(--ink-4);font-size:.8rem;margin-top:2px"></p>
+          </div>
+          <button class="modal-close" onclick="closeModal('applyModal')" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body" id="applyForm">
+          <input type="hidden" id="applyOppId" />
+          <div class="fg">
+            <label for="ap-name">Full name *</label>
+            <input id="ap-name" type="text" placeholder="Fatou Jallow" />
+          </div>
+          <div class="frow">
+            <div class="fg">
+              <label for="ap-email">UTG email *</label>
+              <input id="ap-email" type="email" placeholder="you@utg.edu.gm" />
+            </div>
+            <div class="fg">
+              <label for="ap-id">Student ID *</label>
+              <input id="ap-id" type="text" placeholder="UTG/2022/CS/045" />
+            </div>
+          </div>
+          <div class="fg">
+            <label for="ap-phone">Phone number</label>
+            <input id="ap-phone" type="tel" placeholder="+220 ..." />
+          </div>
+          <div class="fg">
+            <label for="ap-note">Why are you a good fit? (optional)</label>
+            <textarea id="ap-note" placeholder="A short note to include with your application…"></textarea>
+          </div>
+          <button class="btn btn-gold" style="width:100%" onclick="submitApplication()">Submit Application</button>
+        </div>
+        <div class="modal-success" id="applySuccess" style="display:none">
+          ✅ Your application details have been recorded. Good luck!
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer" role="contentinfo">
+      <div class="wrap footer-in">
+        <div class="footer__brand">
+          <span class="nav__badge">UTG</span>
+          <span>Opportunity Board</span>
+        </div>
+        <nav class="footer__links" aria-label="Footer navigation">
+          <button onclick="goto('home')">Home</button>
+          <button onclick="goto('opps')">Opportunities</button>
+          <button onclick="goto('about')">About</button>
+          <button onclick="goto('bookmarks')">Bookmarks</button>
+          <button onclick="goto('contact')">Contact</button>
+        </nav>
+        <p class="footer__copy">© 2026 UTG Opportunity Board · Built for students, by students · University of The
+          Gambia</p>
+      </div>
+    </footer>
+
+  </div><!-- /#appRoot -->
+
+
+  <!-- All app behavior (routing, auth, filters, modals, localStorage) lives in script.js -->
+  <script src="script.js"></script>
+</body>
+
+</html>
